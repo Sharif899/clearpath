@@ -1,7 +1,5 @@
 import type { Debt, DebtStrategy, PayoffPlan, PayoffMonth, Expense, Budget, Category } from "../types";
 
-// ─── Expense calculations ─────────────────────────────────────────────────────
-
 export function totalSpent(expenses: Expense[]): number {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
 }
@@ -34,8 +32,6 @@ export function monthlyExpenses(expenses: Expense[]): Expense[] {
   });
 }
 
-// ─── Debt calculations ────────────────────────────────────────────────────────
-
 export function totalDebt(debts: Debt[]): number {
   return debts.reduce((sum, d) => sum + d.balance, 0);
 }
@@ -44,13 +40,6 @@ export function minimumTotal(debts: Debt[]): number {
   return debts.reduce((sum, d) => sum + d.minimumPayment, 0);
 }
 
-/**
- * Calculate debt payoff plan using either:
- * - avalanche: pay highest interest rate first (minimises total interest)
- * - snowball:  pay lowest balance first (maximises motivation)
- *
- * extraPayment is the amount above all minimums to apply each month.
- */
 export function calculatePayoff(
   debts: Debt[],
   strategy: DebtStrategy,
@@ -60,7 +49,6 @@ export function calculatePayoff(
     return { months: [], totalInterest: 0, payoffDate: "", monthsToPayoff: 0 };
   }
 
-  // Deep clone balances
   let balances = debts.map((d) => ({ ...d, balance: d.balance }));
 
   const sortedOrder = (bs: typeof balances) => {
@@ -82,7 +70,6 @@ export function calculatePayoff(
     let interestThisMonth = 0;
     let principalThisMonth = 0;
 
-    // Apply interest
     balances = balances.map((d) => {
       if (d.balance <= 0) return d;
       const interest = (d.balance * (d.interestRate / 100)) / 12;
@@ -92,7 +79,6 @@ export function calculatePayoff(
 
     totalInterest += interestThisMonth;
 
-    // Pay minimums first
     balances = balances.map((d) => {
       if (d.balance <= 0) return d;
       const payment = Math.min(d.minimumPayment, d.balance);
@@ -100,7 +86,6 @@ export function calculatePayoff(
       return { ...d, balance: Math.max(0, d.balance - payment) };
     });
 
-    // Apply extra payment to priority debt
     let remaining = extraPayment;
     const ordered = sortedOrder(balances);
     for (const priority of ordered) {
@@ -145,8 +130,6 @@ export function interestSaved(
   return { avalanche, snowball, baseline };
 }
 
-// ─── Formatting helpers ───────────────────────────────────────────────────────
-
 export function fmt(n: number, opts?: Intl.NumberFormatOptions): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0, ...opts });
 }
@@ -158,4 +141,3 @@ export function fmtDecimal(n: number): string {
 export function fmtPct(n: number): string {
   return `${Math.round(n)}%`;
 }
-
